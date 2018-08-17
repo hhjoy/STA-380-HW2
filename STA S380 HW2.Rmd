@@ -279,12 +279,10 @@ mynames = file_list %>% #trying to clean up file nammes
 	 { lapply(., paste0, collapse = '') } %>%
 	 unlist
 
-#clean up file names
-mynames = file_list %>% #trying to clean up file nammes
-	 { strsplit(., '/', fixed=TRUE) } %>% #split on /
-	 { lapply(., tail, n=2) } %>%
-	 { lapply(., paste0, collapse = '') } %>%
-	 unlist
+# Rename the articles
+docs = lapply(file_list, readerPlain) #grabs all text files in directory
+mynames
+names(docs) = mynames
 
 #creat corpus
 documents_raw = Corpus(VectorSource(docs)) 
@@ -323,9 +321,6 @@ for(author in author_dirs) {
   test_labels = append(test_labels, rep(author_name, length(files_to_add)))
 }
 
-#docs = lapply(file_list, readerPlain) 
-#names(docs) = file_list
-#names(docs) = sub('.txt', '', names(docs))
 
 #clean up file names
 mynames = file_list %>% #trying to clean up file nammes
@@ -404,7 +399,7 @@ rf_correct_by_author
 sum(rf_correct_by_author)/2500
 ```
 
-Random forest had 88.4% accuracy. It predicted worst for the author Scott Hills, where the model only predicted 24 correct (less than 50% correct). However, the model predicted 50 or close to 50 for many authors such as Jim Gilchrist, John Mastrini, and Jonathan Birt. Overall Random forest performed well on this data. 
+NEED TO SET SEED AND UPDATE THIS Random forest had 88.4% accuracy. It predicted worst for the author Scott Hills, where the model only predicted 24 correct (less than 50% correct). However, the model predicted 50 or close to 50 for many authors such as Jim Gilchrist, John Mastrini, and Jonathan Birt. Overall Random forest performed well on this data. 
 
 
 ###Practice with Association Rule Mining
