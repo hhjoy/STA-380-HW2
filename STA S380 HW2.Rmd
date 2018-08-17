@@ -5,11 +5,253 @@ date: "8/17/2018"
 output: html_document
 ---
 ###Flights at ABIA
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(tm)
+setwd('/users/chelseamatthews/Documents')
+airlinedata = read.csv('ABIA.csv', header=TRUE)
 
+#percentage of flights cancelled for each airline
+dfcancelled = data.frame(aggregate(airlinedata$Cancelled~airlinedata$UniqueCarrier,airlinedata,sum))
+
+df=data.frame(aggregate(airlinedata$FlightNum ~ airlinedata$UniqueCarrier,airlinedata, length))
+finaldf = merge(dfcancelled,df)
+finaldf = within(finaldf, percent <- airlinedata.Cancelled/airlinedata.FlightNum)
+finaldf = finaldf[order(finaldf$percent),]
+
+barplot(finaldf$percent, names = finaldf$arrivaldelays.UniqueCarrier,
+        xlab = 'Unique Carrier', ylab = '% of Flights Cancelled',
+        main = "% of Flights Cancelled per Airline",las=2, space = .5, col = 'dodgerblue3',
+        names.arg = c("NW","F9","US","WN","XE","UA","DL","CO","YV","B6", "OO","EV","OH","9E","AA","MQ"))
 
 ```
+American Eagle (MQ) had the highest percentage of cancelled flights. American Airlines (AA) had the next highest percent of cancelled flights. 
+
+#Arrivals
+
+```{r message=FALSE, warning=FALSE}
+#average arrival delay
+
+arrdelay = airlinedata[which(airlinedata[,15]>0),]
+df_arrdelay = data.frame(aggregate(arrdelay$ArrDelay ~ arrdelay$UniqueCarrier,arrdelay,mean))
+df_arrdelay = df_arrdelay[order(df_arrdelay$arrdelay.ArrDelay),]
+
+barplot(df_arrdelay$arrdelay.ArrDelay, names = df_arrdelay$arrdelay.UniqueCarrier,
+        xlab = "Unique Carrier", ylab = "Avg. Arrival Delays (minutes)",
+        main = "Avg. Arrival Delay times per Airline", las = 2, space=.5, col = 'darkseagreen')
+```
+JetBlue(B6) has the longest average arrival delays, followed by ExpressJet (EV) and Mesa Airlines(YV). 
+
+```{r}
+#arrival delays per month
+df_arrdelaymon = data.frame(aggregate(arrdelay$ArrDelay ~ arrdelay$Month,arrdelay,length))
+plot(df_arrdelaymon$arrdelay.Month, df_arrdelaymon$arrdelay.ArrDelay, 
+     xlab = "Month", ylab = "# of Arrival Delays", 
+     main = "Number of Arrival delays per month", type ='o', col='lightblue',lwd=2, pch=10)
+```
+March and June had the highest number of arrival delays, while September and November had the smallest number of arrival delays. 
+
+```{r message=FALSE, warning=FALSE}
+#average arrival delays per month
+df_arrdelaymon = data.frame(aggregate(arrdelay$ArrDelay ~ arrdelay$Month,arrdelay,mean))
+plot(df_arrdelaymon$arrdelay.Month, df_arrdelaymon$arrdelay.ArrDelay, 
+     xlab = "Month", ylab = "Avg. Arrival Delay (Minutes)", 
+     main = "Avg. Arrival delays per month", type ='o', col='lightblue',lwd=2, pch=10)
+```
+September, October and November had the shortest average arrival delays, while December had the longest. 
+
+```{r message=FALSE, warning=FALSE}
+#arrival delays by day of the week
+
+df_arrdelayday = data.frame(aggregate(arrdelay$ArrDelay ~ arrdelay$DayOfWeek,arrdelay,length))
+
+plot(df_arrdelayday$arrdelay.DayOfWeek, df_arrdelayday$arrdelay.ArrDelay, 
+     xlab = "Day of Week (1-Monday - 7-Sunday)", ylab = "# of Arrival Delays", 
+     main = "Number of Arrival delays by Day of Week", type ='o', col='thistle',lwd=2, pch=10)
+```
+Saturdays had the lowest amount of arrival delays, while Thursdays and Fridays had the most. 
+
+```{r}
+#average time of arrival delays by day of the week
+
+df_arrdelayday = data.frame(aggregate(arrdelay$ArrDelay ~ arrdelay$DayOfWeek,arrdelay,mean))
+
+plot(df_arrdelayday$arrdelay.DayOfWeek, df_arrdelayday$arrdelay.ArrDelay, 
+     xlab = "Day of Week (1-Monday - 7-Sunday", ylab = "Average Time of Arr Delay (minutes)", 
+     main = "Avg. Time of  Arrival Delay by Day of Week", type ='o', col='steelblue',lwd=2, pch=10)
+```
+The Average time of arrival delays is the lowest on Wednesdays and highest on Sundays. 
+
+#average time of arrival delays by time of day
+
+```{r message=FALSE, warning=FALSE}
+#average time of arrival delays by time of day
+
+df_arrdelaytime = data.frame(aggregate(arrdelay$ArrDelay ~ arrdelay$ArrTime,arrdelay,length))
+
+plot(df_arrdelaytime$arrdelay.ArrTime, df_arrdelaytime$arrdelay.ArrDelay, 
+     xlab = "Time of Day (24 Hour Time)", ylab = "# of Arr. Delay ", 
+     main = "Number of Arrival Delay by Time of Day", type ='o', col='slategray',lwd=2, pch=10)
+```
+Between 1 am and 6 am there are the fewest amount of arrival delays. This is probably due to the lesser amount of flights during this time, since many airports don't have flights bewtween 2 am and 5 am . Around 11 am and 8 pm seem to ahve the the highest number of arrival delays. The best time for arrivals seems to be from around 6 am to 8 am. The number stays pretty consistent throughout the day after 10 am. 
+
+```{r}
+#average time of arrival delays by time of day
+
+df_arrdelaytime = data.frame(aggregate(arrdelay$ArrDelay ~ arrdelay$ArrTime,arrdelay,mean))
+
+plot(df_arrdelaytime$arrdelay.ArrTime, df_arrdelaytime$arrdelay.ArrDelay, 
+     xlab = "Time of Day (24 Hour Time)", ylab = "Average Time of Arr Delay (minutes)", 
+     main = "Avg. Time of  Arrival Delay by Time of Day", type ='o', col='slategray',lwd=2, pch=10)
+```
+Between Midnight and 5 am the average time of arrival delay is the highest (with a peak at around 5:30am). After about 6 am, average arrival delay by time of day is pretty low. 
+
+#Departures
+
+```{r}
+#average departure delay 
+
+depdelay = airlinedata[which(airlinedata[,16]>0),]
+df_depdelay = data.frame(aggregate(depdelay$DepDelay ~ depdelay$UniqueCarrier,depdelay,mean))
+df_depdelay = df_depdelay[order(df_depdelay$depdelay.DepDelay),]
+
+barplot(df_depdelay$depdelay.DepDelay, names = df_depdelay$depdelay.UniqueCarrier,
+        xlab = "Unique Carrier", ylab = "Avg. Departure Delays (minutes)",
+        main = "Avg. Departure Delay times per Airline", las = 2, space=.5, col = 'orange3')
+```
+Departure delays are usually linked to arrival delays. Looking at departure delays is more important in understanding the likelihood of arriving at your destination on time/ or making conncections at another airport.  The top three airlines with the longest departure delay times were Mesa Airlines (YV), PSA Airlines (OH), and Jet Blue(B6). The airlines with the longest delayed departure times is similar to the airlines with the longest avergae arrival delays. 
+
+```{r}
+#% of of departures delayed per airline 
+
+df_delay_percent = data.frame(aggregate(depdelay$DepDelay ~ depdelay$UniqueCarrier, 
+                                        depdelay, length))
+df_percent = data.frame(aggregate(airlinedata$FlightNum ~ airlinedata$UniqueCarrier, 
+                                  airlinedata, length))
+
+percent_finaldf = merge(df_delay_percent, df_percent, by.x="depdelay.UniqueCarrier", by.y="airlinedata.UniqueCarrier")
+percent_finaldf = within(percent_finaldf, percent <- depdelay.DepDelay/airlinedata.FlightNum)
+percent_finaldf = percent_finaldf[order(percent_finaldf$percent),]
+barplot(percent_finaldf$percent, names = percent_finaldf$depdelay.UniqueCarrier,
+        xlab = "Unique Carrier", ylab = "% of Depatures Delayed",
+        main = "% of Departures Delayed per Airline", las=2, space=.5, col='lightcyan2')
+```
+Looking at the % of Departures delayed per Airline, ExpressJet(EV) has 50% of flights delayed. Southwest (WN) also has close to 50% of flights delayed. The three airlines with the highest % of departures delayed (EpressJet, Southwest and Continential Airlines) are not the same airlines with the highest average  departure delay times. This means that while one might have longer average departure delays, it does not mean they are delayed the most. 
+
+```{r}
+#departure delays per month
+df_depdelaymon = data.frame(aggregate(depdelay$DepDelay ~ depdelay$Month,depdelay,length))
+plot(df_depdelaymon$depdelay.Month, df_depdelaymon$depdelay.DepDelay, 
+     xlab = "Month", ylab = "# of Departure Delays", 
+     main = "Number of Departure delays per month", type ='o', col='sienna',lwd=2, pch=10)
+```
+The highest number of departure delays occur in March and June. The months with the least amount of departure delays were September and November. Next, we will look at which months had the longest average delays. 
+
+```{r}
+#average departure delays per month
+dfmm =data.frame(aggregate(depdelay$DepDelay~depdelay$Month, depdelay,mean))
+
+plot(dfmm$depdelay.Month, dfmm$depdelay.DepDelay, 
+     xlab = "Month", ylab="Avg. Departure Delays (Minutes)", 
+     main = "Avg. Departure Delay times by Month", type='o',
+     col = 'palegreen',lwd=2, pch =10)
+```
+While March and June had highest number of delays. December had the longest average delays. September and October had the shortest average departure delays. 
+
+```{r}
+#deprture delays by day of the week
+
+df_depdelayday = data.frame(aggregate(depdelay$DepDelay ~ depdelay$DayOfWeek,depdelay,length))
+
+plot(df_depdelayday$depdelay.DayOfWeek, df_depdelayday$depdelay.DepDelay, 
+     xlab = "Day of Week (1-Monday - 7-Sunday)", ylab = "# of Departure Delays", 
+     main = "Number of Departure delays by Day of Week", type ='o', col='tomato',lwd=2, pch=10)
+```
+Fridays have the most number of Departure delays, followed by Thursdays. Saturdays had the lowest number of departure delays. 
+
+```{r}
+#average departure delays by day of the  week
+
+df_depdelayday = data.frame(aggregate(depdelay$DepDelay ~ depdelay$DayOfWeek,depdelay,mean))
+
+plot(df_depdelayday$depdelay.DayOfWeek, df_depdelayday$depdelay.DepDelay, 
+     xlab = "Day of Week (1-Monday - 7-Sunday)", ylab = "Avg. Departure Delays (minutes)", 
+     main = "Avg.  Departure delays by Day of Week", type ='o', col='royalblue',lwd=2, pch=10)
+```
+Wednesdays had the shortest average time of departure delays, while Sunday had the longest delays. Tuesdays had the second longest average departure delays. 
+
+```{r}
+#average time of departure delays by time of day
+
+df_depdelaytime = data.frame(aggregate(depdelay$DepDelay ~ depdelay$DepTime,depdelay,length))
+
+plot(df_depdelaytime$depdelay.DepTime, df_depdelaytime$depdelay.DepDelay, 
+     xlab = "Time of Day (24 Hour Time)", ylab = "# of Dep. Delay ", 
+     main = "Number of Departure Delays by Hour", type ='o', col='rosybrown',lwd=2, pch=10)
+```
+It seems like the most delayed happen in the middle of the day between 6 am and 8 pm. There a re a coupleof peaks between 6 am and 7 pm. After 8pm, there are less departure delays and between midnight and 5 am there are almost zero. But, then again there are not many departing flights between midnight and 5 am. 
+
+```{r}
+#average time of departure delays by time of day
+
+df_depdelaytime = data.frame(aggregate(depdelay$DepDelay ~ depdelay$DepTime,depdelay,mean))
+
+
+plot(df_depdelaytime$depdelay.DepTime, df_depdelaytime$depdelay.DepDelay, 
+     xlab = "Time of Day (24 Hour Time)", ylab = "Avg. Departure Delays (Minutes) ", 
+     main = "Avg. Time of Departure Delays by Hour", type ='o', col='rosybrown',lwd=2, pch=10)
+```
+While there are not many departure delays between midnight and 5 am, the ones that do occur are long delays. In contrast the delays during the peak delay times seem to be shorts. The night delays (after 8pm) are longer, but not as long as the early morning delays. 
+
+#Destinations and Origins
+```{r}
+departures = subset(airlinedata, Origin == 'AUS')
+
+#average departure delay by destination 
+departdelay = departures[which(departures[,16]>0),]
+df_depdelays = data.frame(aggregate(departdelay$DepDelay ~ departdelay$Dest, departdelay, mean))
+df_depdelays2 = df_depdelays[order(-df_depdelays$departdelay.DepDelay),][1:15,]
+
+barplot(df_depdelays2$departdelay.DepDelay, names = df_depdelays2$departdelay.Dest,xlab = "Destination", ylab = 'Avg. Departure Delays (minutes)', main = 'Longest Avg. Departure Delay times by Destination', las =2, space=.5, col='plum2')
+```
+The above graph shows which airports are the destinations in which there are the longest average delays. The longest delays happen for flights headed to Des Moines, Iowa (DSM). THe second longest are for St. Louis (STL) and the third longest delays are for flights headed to Newark, NJ (EWR). 
+
+```{r}
+#destinations with the shortest average delays
+
+departures = subset(airlinedata, Origin == 'AUS')
+
+#average departure delay by destination 
+departdelay = departures[which(departures[,16]>0),]
+df_depdelays = data.frame(aggregate(departdelay$DepDelay ~ departdelay$Dest, departdelay, mean))
+df_depdelays2 = df_depdelays[order(df_depdelays$departdelay.DepDelay),][1:15,]
+
+barplot(df_depdelays2$departdelay.DepDelay, names = df_depdelays2$departdelay.Dest,xlab = "Destination", ylab = 'Avg. Departure Delays (minutes)', main = ' Shortest Avg. Departure Delay times by Destination', las =2, space=.5, col='lavender')
+```
+The three destinations with the shortest average departure delays are San Diego (SAN), Tucson (TUS) and Valley International Airport (HRL). 
+
+```{r}
+#average arrival delay by Origin
+arrivals = subset(airlinedata, Origin != 'AUS')
+arrivedelay = arrivals[which(arrivals[,15]>0),]
+df_arrdelays = data.frame(aggregate(arrivedelay$ArrDelay ~ arrivedelay$Origin, arrivedelay, mean))
+df_arrdelays2 = df_arrdelays[order(-df_arrdelays$arrivedelay.ArrDelay), ][1:15,]
+
+barplot(df_arrdelays2$arrivedelay.ArrDelay, names = df_arrdelays2$arrivedelay.Origin,xlab = "Origin", ylab = 'Avg. Arrival Delays (minutes)', main = 'Longest Avg. Arrival Delay times by Origin', las =2, space=.5, col='lightsteelblue')
+```
+The longest average arrival delays happens with planes coming from McGhee Tyson Airport in Knoxville, TN (TYS), Will Rogers World Airport in Oklahoma City, and Philadelphia (PHL). 
+
+```{r}
+#average shortest arrival delay by Origin
+arrivals = subset(airlinedata, Origin != 'AUS')
+arrivedelay = arrivals[which(arrivals[,15]>0),]
+df_arrdelays = data.frame(aggregate(arrivedelay$ArrDelay ~ arrivedelay$Origin, arrivedelay, mean))
+df_arrdelays2 = df_arrdelays[order(df_arrdelays$arrivedelay.ArrDelay), ][1:15,]
+
+barplot(df_arrdelays2$arrivedelay.ArrDelay, names = df_arrdelays2$arrivedelay.Origin,xlab = "Origin", ylab = 'Avg. Arrival Delays (minutes)', main = 'Shortest Avg. Arrival Delay times by Origin', las =2, space=.5, col='lightsteelblue')
+
+```
+
+The shorest average arrival delays happen with planes coming from Oakland, California (OAK), Tampa, Florida (TPA) and Valley International (HRL). 
 
 ###Author Attribution
 ```{r}
