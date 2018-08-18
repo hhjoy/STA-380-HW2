@@ -356,7 +356,7 @@ Naive Bayes only acheives an accuracy of 49% which is not very good. Jim Gilchri
 
 
 ####Random Forest
-The next model we will try is Random Forest. Since our dataset is large, we specify 200 as our number of trees.
+The next model we will try is Random Forest. Since our dataset is large, we specify 200 as our number of trees and limit mtry to 6.
 
 ```{r}
 #Random Forest
