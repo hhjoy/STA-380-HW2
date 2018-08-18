@@ -254,141 +254,119 @@ barplot(df_arrdelays2$arrivedelay.ArrDelay, names = df_arrdelays2$arrivedelay.Or
 The shorest average arrival delays happen with planes coming from Oakland, California (OAK), Tampa, Florida (TPA) and Valley International (HRL). 
 
 ###Author Attribution
+
+####Preprocessing
+
+First we need to read in all of our data and then preprocess it to make everything lowercase, remove numbers, remove punctuation, remove excess white spaces, and remove stopwords. We then create the document term matrix for both the train and test together to address the issue of some terms appearing in the test but not train or vice versa.
+
 ```{r}
 library(tm) 
 
 readerPlain = function(fname){
-				readPlain(elem=list(content=readLines(fname)), 
-							id=fname, language='en') }
+  readPlain(elem=list(content=readLines(fname)), 
+            id=fname, language='en') }
 
-author_dirs = Sys.glob('~/Documents/UT/Summer Classes/Intro to Predictive Modeling/Part 2/HW 2/ReutersC50/C50train/*') 
+authors_train <- Sys.glob('~/Documents/UT/Summer Classes/Intro to Predictive Modeling/Part 2/HW 2/ReutersC50/C50train/*')
+file_list_train = NULL
+labels_train = NULL
+authors_test = Sys.glob('~/Documents/UT/Summer Classes/Intro to Predictive Modeling/Part 2/HW 2/ReutersC50/C50test/*')
+file_list_test = NULL
+labels_test = NULL
 
-file_list = NULL
-labels = NULL
-for(author in author_dirs) {
-  author_name = substring(author, first=84)
-  files_to_add = Sys.glob(paste0(author, '/*.txt'))
-  file_list = append(file_list, files_to_add)
-  labels = append(labels, rep(author_name, length(files_to_add)))
+for(i in authors_train) { 
+  author_name_train = substring(i, first = 84)
+  files_to_add_train = Sys.glob(paste0(i, '/*.txt'))
+  file_list_train = append(file_list_train, files_to_add_train)
+  labels_train = append(labels_train, rep(author_name_train, length(files_to_add_train)))
 }
 
-#clean up file names
-mynames = file_list %>% #trying to clean up file nammes
-	 { strsplit(., '/', fixed=TRUE) } %>% #split on /
-	 { lapply(., tail, n=2) } %>%
-	 { lapply(., paste0, collapse = '') } %>%
-	 unlist
-
-# Rename the articles
-docs = lapply(file_list, readerPlain) #grabs all text files in directory
-mynames
-names(docs) = mynames
-
-#creat corpus
-documents_raw = Corpus(VectorSource(docs)) 
-
-my_documents = documents_raw
-my_documents = tm_map(my_documents, content_transformer(tolower)) # make everything lowercase, tm_map takes a corpus and a function
-my_documents = tm_map(my_documents, content_transformer(removeNumbers)) # remove numbers
-my_documents = tm_map(my_documents, content_transformer(removePunctuation)) # remove punctuation
-my_documents = tm_map(my_documents, content_transformer(stripWhitespace)) ## remove excess white-space
-my_documents = tm_map(my_documents, content_transformer(removeWords), stopwords("en")) #remove stop words
-
-DTM_train = DocumentTermMatrix(my_documents)
-DTM_train = removeSparseTerms(DTM_train, 0.99) #pass corpus and threshold
-
-X_train = as.matrix(DTM_train)
-
-smooth_count = 1/nrow(X_train)
-w_all = rowsum(X_train + smooth_count, labels) #prob of all words
-w_all = w_all/sum(w_all)
-w_all = log(w_all)
-```
-
-```{r}
-#Do same for test
-
-author_dirs = Sys.glob('~/Documents/UT/Summer Classes/Intro to Predictive Modeling/Part 2/HW 2/ReutersC50/C50test/*') 
-
-file_list = NULL
-test_labels = NULL
 author_names = NULL
-for(author in author_dirs) {
-  author_name = substring(author, first=83)
-  author_names = append(author_names, author_name)
-  files_to_add = Sys.glob(paste0(author, '/*.txt'))
-  file_list = append(file_list, files_to_add)
-  test_labels = append(test_labels, rep(author_name, length(files_to_add)))
+for(i in authors_test) { 
+  author_name_test = substring(i, first = 83)
+  author_names = append(author_names, author_name_test)
+  files_to_add_test = Sys.glob(paste0(i, '/*.txt'))
+  file_list_test = append(file_list_test, files_to_add_test)
+  labels_test = append(labels_test, rep(author_name_test, length(files_to_add_test)))
 }
 
+file_list <- append(file_list_train,file_list_test) #combine train and test for simplicity
+labels <- unique(append(labels_train,labels_test))
 
-#clean up file names
-mynames = file_list %>% #trying to clean up file nammes
-  { strsplit(., '/', fixed=TRUE) } %>% #split on /
-  { lapply(., tail, n=2) } %>%
-  { lapply(., paste0, collapse = '') } %>%
-  unlist
+all_docs = lapply(file_list, readerPlain) 
+names(all_docs) = file_list
+names(all_docs) = sub('.txt', '', names(all_docs))
+all_corpus = Corpus(VectorSource(all_docs))
+#names(all_corpus) = labels
 
-# Rename the articles
-docs = lapply(file_list, readerPlain) #grabs all text files in directory
-mynames
-names(docs) = mynames
-
-#creat corpus
-documents_raw_test = Corpus(VectorSource(docs)) 
-
-my_documents_test = documents_raw_test
-my_documents_test = tm_map(my_documents_test, content_transformer(tolower)) # make everything lowercase, tm_map takes a corpus and a function
-my_documents_test = tm_map(my_documents_test, content_transformer(removeNumbers)) # remove numbers
-my_documents_test = tm_map(my_documents_test, content_transformer(removePunctuation)) # remove punctuation
-my_documents_test = tm_map(my_documents_test, content_transformer(stripWhitespace)) ## remove excess white-space
-my_documents_test = tm_map(my_documents_test, content_transformer(removeWords), stopwords("en")) #remove stop words
-
-DTM_test = DocumentTermMatrix(my_documents_test,list(dictionary=colnames(DTM_train)))
+all_corpus = tm_map(all_corpus, content_transformer(tolower)) # make everything lowercase
+all_corpus = tm_map(all_corpus, content_transformer(removeNumbers)) # remove numbers
+all_corpus = tm_map(all_corpus, content_transformer(removePunctuation)) # remove punctuation
+all_corpus = tm_map(all_corpus, content_transformer(stripWhitespace)) ## remove excess white-space 
+all_corpus = tm_map(all_corpus, content_transformer(removeWords), stopwords("en"))  #remove stop words
 
 
-X_test = as.matrix(DTM_test)
+#creating a document term matrix with tf idf scores 
+dtm <- DocumentTermMatrix(all_corpus,control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE)))
+dtm <- removeSparseTerms(dtm, 0.95) 
 ```
+
+####Naive Bayes
+We first try the Naive Bayes model on the training data set. We find the weight vector for each author that contains the weight of each word used by that author. We smooth the data so that when words are not in an author's bag of words, a small non-zero probability is given so that the posterior probabilities don't become zero.
 
 ```{r}
 #Naive Bayes
 
-predictions = NULL
-for (i in 1:nrow(X_test)) {
-  # get maximum Naive Bayes log probabilities
-  max = -(Inf)
-  author = NULL
-  for (j in 1:nrow(w_all)) {
-    result = sum(w_all[j,]*X_test[i,])
-    if (result > max) {
-      max = result
-      author = rownames(w_all)[j]
-    }
-  }
-  predictions = append(predictions, author)
-}
+x <- as.matrix(dtm)
+x_train <- x[1:2500,]
+x_test <- x[2501:5000,]
+smooth_count = 1/nrow(x_train)   
 
-predict_results = table(test_labels,predictions) #FIX: needs to be 50x50, returning 50x20 currently
+author_sums <- rowsum(x_train +smooth_count, labels_train)  
+wt <- rowSums(author_sums)
+author_wt <- log(author_sums/wt)    #  log of prob of word occuring with particular author 
+
+predicted_probabilities <- x_test%*%t(author_wt)  #use x_test to multiply log probabilities from weights of training set authors
+
 ```
 
 ```{r}
+predicted_authors = NULL
+for( i in 1:2500) { 
+  predicted_authors = c(predicted_authors,which.max(predicted_probabilities[i,]))
+  }
+
+predicted_authors <- as.data.frame(predicted_authors)
+predicted_authors$actual <- rep(1:50,each = 50)
+
+#assign author with max sum of probabilities for each of 2500 test points in new list
+
+results_bayes=table(predicted_authors$predicted_authors, predicted_authors$actual)
+results_bayes
+
 correct = NULL
-for (i in 1:nrow(predict_results)) {
-  correct = append(correct, predict_results[i,i])
+for (i in 1:nrow(results_bayes)) {
+  correct = append(correct, results_bayes[i,i])
 }
 
 correct_by_author = data.frame(correct, row.names = author_names)
 correct_by_author
-sum(correct_by_author)/2500
+sum(correct_by_author)/2500 #accuracy
 ```
+Naive Bayes only acheives an accuracy of 49% which is not very good. Jim Gilchrist and Fumiko Fujisaki are predicted best, while authors like John Mastrini are predicted poorly.
+
+
+####Random Forest
+The next model we will try is Random Forest. Since our dataset is large, we specify 200 as our number of trees.
 
 ```{r}
 #Random Forest
 
 library(randomForest)
-rf.fit = randomForest(x = X_train, y = as.factor(labels), mtry=6, ntree=200)
-rf.pred = predict(rf.fit, data=X_test)
-rf_results = table(test_labels, rf.pred)
+set.seed(11)
+
+rf.fit = randomForest(x = x_train, y = as.factor(labels_train), mtry=6, ntree=200)
+rf.pred = predict(rf.fit, data=x_test)
+rf_results = table(labels_test, rf.pred)
 rf_correct = NULL
 for (i in 1:nrow(rf_results)) {
   rf_correct = append(rf_correct, rf_results[i, i])
@@ -398,8 +376,7 @@ rf_correct_by_author = data.frame(rf_correct, row.names = author_names)
 rf_correct_by_author
 sum(rf_correct_by_author)/2500
 ```
-
-NEED TO SET SEED AND UPDATE THIS Random forest had 88.4% accuracy. It predicted worst for the author Scott Hills, where the model only predicted 24 correct (less than 50% correct). However, the model predicted 50 or close to 50 for many authors such as Jim Gilchrist, John Mastrini, and Jonathan Birt. Overall Random forest performed well on this data. 
+Our random forest produces a higher accuracy of around 72% and is therefore my preferred model. Authors like Aaron Pressman and Jim Gilchrist are predicted well, meaning that perhaps they have strong characteristic writing styles specific to them. Other authors like Jan Lopatka and William Kazer are not well predicted, and thus potentially have less of a distinguishable vocabularly in their writing.
 
 
 ###Practice with Association Rule Mining
