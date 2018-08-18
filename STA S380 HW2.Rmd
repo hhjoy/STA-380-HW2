@@ -352,7 +352,7 @@ correct_by_author = data.frame(correct, row.names = author_names)
 correct_by_author
 sum(correct_by_author)/2500 #accuracy
 ```
-Naive Bayes only acheives an accuracy of 49% which is not very good. Jim Gilchrist and Fumiko Fujisaki are predicted best, while authors like John Mastrini are predicted poorly.
+Naive Bayes only acheives an accuracy of 49% which is not very good. Jim Gilchrist and Fumiko Fujisaki are predicted best (48 correct, 2 wrongly attributed) , while authors like John Mastrini are predicted poorly. Some of the most common misclassifications were Scott Hillis for Jane Macartney and Tan Eelyn for Peter Humphrey.
 
 
 ####Random Forest
