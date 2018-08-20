@@ -1,14 +1,14 @@
 ---
 title: "STA S380 HW2"
-author: "Hope Knopf"
+author: "Hope Knopf, Marie Gleichauf, Chelsea Matthews"
 date: "8/17/2018"
 output: html_document
 ---
 ###Flights at ABIA
 ```{r message=FALSE, warning=FALSE}
 library(tm)
-setwd('/users/chelseamatthews/Documents')
-airlinedata = read.csv('ABIA.csv', header=TRUE)
+#setwd('/users/chelseamatthews/Documents')
+airlinedata = read.csv('~/Documents/UT/Summer Classes/Intro to Predictive Modeling/Part 2/HW 2/ABIA.csv', header=TRUE)
 
 #percentage of flights cancelled for each airline
 dfcancelled = data.frame(aggregate(airlinedata$Cancelled~airlinedata$UniqueCarrier,airlinedata,sum))
@@ -384,7 +384,7 @@ Our random forest produces a higher accuracy of around 72% and is therefore my p
 library(arules)
 library(arulesViz)
 
-groceries = read.transactions("/Users/hopeknopf/Desktop/STA 380 part 2/groceries.txt", format = 'basket', sep = ',')
+groceries = read.transactions("~/Documents/UT/Summer Classes/Intro to Predictive Modeling/Part 2/HW 2/groceries.txt", format = 'basket', sep = ',')
 summary(groceries)
 
 groceries_rules = apriori(groceries, parameter=list(support=.005, confidence=.5, maxlen=8))
