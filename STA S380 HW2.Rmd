@@ -2,7 +2,10 @@
 title: "STA S380 HW2"
 author: "Hope Knopf, Marie Gleichauf, Chelsea Matthews"
 date: "8/17/2018"
-output: html_document
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
 ---
 ###Flights at ABIA
 ```{r message=FALSE, warning=FALSE}
